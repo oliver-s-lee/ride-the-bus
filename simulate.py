@@ -3,11 +3,11 @@
 import random
 import sys
 import statistics
-import tabulate
 import argparse
-import logging
 
-logger = logging.getLogger()
+
+def record(message, end = "\n"):
+    print(message, end = end)
 
 class Player():
     "Someone who plays the game. ABC."
@@ -132,7 +132,7 @@ def play(num_cards, player):
         for index in range(len(home_cards)):
             # First, if the deck is empty, refresh.
             if len(deck.cards) == 0:
-                logger.info("Out of cards! Shuffling ... ", end = "")
+                record("Out of cards! Shuffling ... ", end = "")
                 shuffles += 1
                 # Keep the top most cards, discard everything else.
                 home_cards = [[home_cards[index][-1]] for index in range (0, num_cards)]
@@ -140,16 +140,16 @@ def play(num_cards, player):
                 # Shuffle other cards into deck.
                 deck.reset(exclude = [stack[0] for stack in home_cards])
                 deck.shuffle()
-                logger.info(" there are now {} cards in the deck".format(len(deck.cards)))
+                record(" there are now {} cards in the deck".format(len(deck.cards)))
 
             home_stack = home_cards[index]
             # We need to beat the top-most card.
             card_to_beat = home_stack[-1]
-            logger.info("Card {} of {}, trying to beat a {}... ".format(index +1, len(home_cards), card_to_beat[0]), end = "")
+            record("Card {} of {}, trying to beat a {}... ".format(index +1, len(home_cards), card_to_beat[0]), end = "")
 
             # Get the player's prediction.
             decision = player.play(card_to_beat, deck)
-            logger.info("guessing {} ... ".format(decision), end = "")
+            record("guessing {} ... ".format(decision), end = "")
 
             # Now draw the card.
             next_card = deck.draw()
@@ -158,21 +158,21 @@ def play(num_cards, player):
                 # Unless the player called same, if we draw an ace, they lose.
                 if next_card[0] == 1:
                     if decision == "same" and card_to_beat[0] == 1:
-                        logger.info("and got an ace! (Dodged!)")
+                        record("and got an ace! (Dodged!)")
                         pass
                     
                     else:
-                        logger.info("but got an ace")
+                        record("but got an ace")
                         break
 
                 elif decision == "lower" and next_card[0] >= card_to_beat[0]:
                     # Wrong, go again.
-                    logger.info("but got a {}".format(next_card[0]))
+                    record("but got a {}".format(next_card[0]))
                     break
 
                 elif decision == "higher" and next_card[0] <= card_to_beat[0]:
                     # Wrong, go again.
-                    logger.info("but got a {}".format(next_card[0]))
+                    record("but got a {}".format(next_card[0]))
                     break
 
                 elif decision == "same" and next_card[0] != card_to_beat[0]:
@@ -183,11 +183,11 @@ def play(num_cards, player):
                    # We didn't understand the player.
                    raise Exception("The player is cheating! I do not understand '{}'".format(decision))
 
-                logger.info("and got a {}!".format(next_card[0]))
+                record("and got a {}!".format(next_card[0]))
                 # Have we won?
                 if index == len(home_cards) -1:
                     # Yes!
-                    logger.info("Finally won after {} rounds!".format(rounds))
+                    record("----- Finally won after {} rounds! -----".format(rounds))
                     won = True
 
             finally:
@@ -216,7 +216,6 @@ def main(games, iters = 10000, player_cls = Counter):
     # headers += odds.keys()
         data += odds.values()
         print(",".join([str(item) for item in data]))
-    #print(tabulate.tabulate([data], headers= headers))
 
 #    print("For {} cards, average rounds =  {:.1f}  (±{:.1f}), min = {}, max = {}".format(num_cards, average, statistics.stdev(rounds), min(rounds), max(rounds)))
 #    print(odds)
@@ -231,8 +230,13 @@ if __name__ == '__main__':
     parser.add_argument("num_cards", type = int, nargs = "+")
     parser.add_argument("-i", "--iterations", type = int, default = 10000)
     parser.add_argument("-p", "--player", choices = ["random", "blind", "counter"], default = "blind")
+    parser.add_argument("-V", "--verbose", action = "store_true", help = "Show the player's decisions as they play the game")
 
     args = parser.parse_args()
+
+    if args.verbose:
+        verbose = True
+
     if args.player == "blind":
         player = Blind
     
