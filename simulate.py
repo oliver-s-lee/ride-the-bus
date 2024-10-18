@@ -46,21 +46,31 @@ class Blind(Player):
         For a 7, we'll guess randomly.
         We never guess 'same'.
         """
-        if card_to_beat[0] >= 8:
-            # We'll guess low.
-            return "lower"
-
-        elif card_to_beat[0] <= 6:
-            # We'll guess high.
-            return "higher"
-
-        else:
-            # A 7, guess randomly.
-            if random.getrandbits(1):
+        if self.ace_rule:
+            if card_to_beat[0] >= 8:
+                # We'll guess low.
                 return "lower"
-            
-            else:
+
+            elif card_to_beat[0] <= 7:
+                # We'll guess high.
                 return "higher"
+            
+        else:
+            if card_to_beat[0] >= 8:
+                # We'll guess low.
+                return "lower"
+
+            elif card_to_beat[0] <= 6:
+                # We'll guess high.
+                return "higher"
+
+            else:
+                # A 7, guess randomly.
+                if random.getrandbits(1):
+                    return "lower"
+                
+                else:
+                    return "higher"
             
 class Counter(Player):
     """
