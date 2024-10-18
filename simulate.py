@@ -5,10 +5,6 @@ import sys
 import statistics
 import argparse
 
-
-def record(message, end = "\n"):
-    print(message, end = end)
-
 class Player():
     "Someone who plays the game. ABC."
 
@@ -110,115 +106,139 @@ class Deck():
         """Take a card from the deck, removing it (so it can't be removed again)."""
         return self.cards.pop()
 
+class Game():
+    "A class for representing a single game of ride the bus."
 
-def play(num_cards, player):
-    """
-    Play a game of ride-the-bus.
+    def __init__(self, num_cards: int, player: Player, verbose: bool = False, ace_rule = True):
+        self.num_cards = num_cards
+        self.player = player
+        self.verbose = verbose
+        self.rounds = 0
+        self.shuffles = 1
+        self.deck = Deck()
+        # First, draw our home cards.
+        self.home_cards = [[self.deck.draw()] for _ in range (0, self.num_cards)]
+        self.ace_rule = ace_rule
 
-    :param num_cards: How many cards the player needs to beat.
-    """
-    deck = Deck()
-    
-    # First, draw our home cards.
-    home_cards = [[deck.draw()] for _ in range (0, num_cards)]
+    def record(self, message, end = "\n"):
+        if not self.verbose:
+            return
+        print(message, end = end, file = sys.stderr)
 
-    rounds = 0
-    shuffles = 1
-    won = False
-    # Play
-    while not won:
-        # Start again.
-        rounds +=1
-        for index in range(len(home_cards)):
-            # First, if the deck is empty, refresh.
-            if len(deck.cards) == 0:
-                record("Out of cards! Shuffling ... ", end = "")
-                shuffles += 1
-                # Keep the top most cards, discard everything else.
-                home_cards = [[home_cards[index][-1]] for index in range (0, num_cards)]
+    def refresh(self):
+        "Refresh the deck (because it has run out of cards)."
+        # Keep the top most cards, discard everything else.
+        self.home_cards = [[self.home_cards[index][-1]] for index in range (0, self.num_cards)]
 
-                # Shuffle other cards into deck.
-                deck.reset(exclude = [stack[0] for stack in home_cards])
-                deck.shuffle()
-                record(" there are now {} cards in the deck".format(len(deck.cards)))
+        # Shuffle other cards into deck.
+        self.deck.reset(exclude = [stack[0] for stack in self.home_cards])
+        self.deck.shuffle()
+        self.shuffles += 1
 
-            home_stack = home_cards[index]
-            # We need to beat the top-most card.
-            card_to_beat = home_stack[-1]
-            record("Card {} of {}, trying to beat a {}... ".format(index +1, len(home_cards), card_to_beat[0]), end = "")
+    def next(self, index):
+        "Play the next card. Returns True if the player successfully beats the card."
+        home_stack = self.home_cards[index]
+        # We need to beat the top-most card.
+        card_to_beat = home_stack[-1]
+        self.record("Card {} of {}, trying to beat a {}... ".format(index +1, len(self.home_cards), card_to_beat[0]), end = "")
 
-            # Get the player's prediction.
-            decision = player.play(card_to_beat, deck)
-            record("guessing {} ... ".format(decision), end = "")
+        # Get the player's prediction.
+        decision = self.player.play(card_to_beat, self.deck)
+        self.record("guessing {} ... ".format(decision), end = "")
 
-            # Now draw the card.
-            next_card = deck.draw()
+        # Now draw the card.
+        next_card = self.deck.draw()
 
-            try:
-                # Unless the player called same, if we draw an ace, they lose.
-                if next_card[0] == 1:
-                    if decision == "same" and card_to_beat[0] == 1:
-                        record("and got an ace! (Dodged!)")
-                        pass
-                    
-                    else:
-                        record("but got an ace")
-                        break
+        try:
+            # If we're playing with the ace rule, an ace is always wrong unless the player called same on an ace.
+            if self.ace_rule and next_card[0] == 1:
+                if decision == "same" and card_to_beat[0] == 1:
+                    self.record("and got an ace! (but dodged it)")
+                    pass
+                
+                else:
+                    self.record("but got an ace")
+                    return False
 
-                elif decision == "lower" and next_card[0] >= card_to_beat[0]:
-                    # Wrong, go again.
-                    record("but got a {}".format(next_card[0]))
+            elif decision == "lower" and next_card[0] >= card_to_beat[0]:
+                # Wrong, go again.
+                self.record("but got a {}".format(next_card[0]))
+                return False
+
+            elif decision == "higher" and next_card[0] <= card_to_beat[0]:
+                # Wrong, go again.
+                self.record("but got a {}".format(next_card[0]))
+                return False
+
+            elif decision == "same" and next_card[0] != card_to_beat[0]:
+                # Nope.
+                return False
+
+            elif decision not in ["lower", "higher", "same"]:
+                # We didn't understand the player.
+                raise Exception("The player is cheating! I do not understand '{}'".format(decision))
+
+            self.record("and got a {}!".format(next_card[0]))
+            return True
+
+        finally:
+            # Whatever happens, add the card to the stack.
+            home_stack.append(next_card)
+
+
+    def play(self):
+        """
+        Play a game of ride-the-bus.
+
+        :param num_cards: How many cards the player needs to beat.
+        """
+        won = False
+        # Play
+        while not won:
+            # Start again.
+            self.rounds +=1
+            for index in range(len(self.home_cards)):
+                # First, if the deck is empty, refresh.
+                if len(self.deck.cards) == 0:
+                    self.record("Out of cards! Shuffling ... ", end = "")
+                    self.refresh()
+                    self.record(" there are now {} cards in the deck".format(len(self.deck.cards)))
+                
+                # Now play!
+                if not self.next(index):
+                    # We lost.
                     break
 
-                elif decision == "higher" and next_card[0] <= card_to_beat[0]:
-                    # Wrong, go again.
-                    record("but got a {}".format(next_card[0]))
-                    break
-
-                elif decision == "same" and next_card[0] != card_to_beat[0]:
-                    # Nope.
-                    break
-
-                elif decision not in ["lower", "higher", "same"]:
-                   # We didn't understand the player.
-                   raise Exception("The player is cheating! I do not understand '{}'".format(decision))
-
-                record("and got a {}!".format(next_card[0]))
                 # Have we won?
-                if index == len(home_cards) -1:
+                if index == len(self.home_cards) -1:
                     # Yes!
-                    record("----- Finally won after {} rounds! -----".format(rounds))
+                    self.record("----- Finally won after {} rounds! -----".format(self.rounds))
                     won = True
-
-            finally:
-                # Add card to stack.
-                home_stack.append(next_card)
-
-    return rounds, shuffles
-
         
-def main(games, iters = 10000, player_cls = Counter):
-    player = player_cls(True)
+        return self.rounds, self.shuffles
+
+
+def main(games, iters = 10000, player_cls = Counter, verbose = True, odds = 50, ace_rule = True, csv = True):
+    player = player_cls(ace_rule = ace_rule)
 
     headers = ["Num cards", "average rounds", "stddev", "min", "max"] + list(range(1,100))
-    print(",".join([str(item) for item in headers]))
+    if csv:
+        print(",".join([str(item) for item in headers]))
 
     for num_cards in games:
-
-        results = [play(num_cards, player) for iter in range(iters)]
+        results = [Game(num_cards, player, verbose = verbose, ace_rule = ace_rule).play() for iter in range(iters)]
         rounds = [result[0] for result in results]
         shuffles = [result[1] for result in results]
 
         average = sum(rounds) / len(rounds)
-        data = [num_cards, average, statistics.stdev(rounds), min(rounds), max(rounds)]
+        data = [num_cards, average, statistics.stdev(rounds) if len(rounds) > 1 else 0.0, min(rounds), max(rounds)]
 
-        odds = {rounds_taken: len([res for res in rounds if res <= rounds_taken]) / iters for rounds_taken in range(1,100)}
-    # headers += odds.keys()
-        data += odds.values()
-        print(",".join([str(item) for item in data]))
+        odds_data = {rounds_taken: len([res for res in rounds if res <= rounds_taken]) / iters for rounds_taken in range(1,odds)}
+        data += odds_data.values()
+        if csv:
+            print(",".join([str(item) for item in data]))
 
-#    print("For {} cards, average rounds =  {:.1f}  (±{:.1f}), min = {}, max = {}".format(num_cards, average, statistics.stdev(rounds), min(rounds), max(rounds)))
-#    print(odds)
+        print("For {} cards, average rounds =  {:.1f}  (±{:.1f}), min = {}, max = {}".format(data[0], data[1], data[2], data[3], data[4]), file = sys.stderr)
     
 # If we've been invoked as a program, call main().    
 if __name__ == '__main__':
