@@ -23,3 +23,8 @@ For an average (6 card) game:
  - Playing with the ace rule makes the game 23% harder (when card counting)
  - Refusing to card count makes the game 6% harder (when playing with the ace rule)
 
+# In Graphs
+
+![With ace rule](./Graphs/fitted_ace.png)
+
+![No ace rule](./Graphs/fitted_no_ace.png)
