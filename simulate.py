@@ -258,8 +258,8 @@ if __name__ == '__main__':
         epilog='Text at the bottom of help')
     
     parser.add_argument("num_cards", type = int, nargs = "+")
-    parser.add_argument("-i", "--iterations", type = int, default = 10000)
-    parser.add_argument("-p", "--player", choices = ["random", "blind", "counter"], default = "blind")
+    parser.add_argument("-i", "--iterations", type = int, default = 10000, help = "How many times to repeat each game")
+    parser.add_argument("-p", "--player", choices = ["random", "blind", "counter"], default = "blind", help = "The type of player. Default is 'blind'")
     parser.add_argument("-V", "--verbose", action = "store_true", help = "Show the player's decisions as they play the game")
     parser.add_argument("--odds", type = int, help = "How many rounds to show probabilities for", default = 50)
     parser.add_argument("-a", "--no-ace-rule", help = "Make aces act normally", default = False, action  = "store_true")
