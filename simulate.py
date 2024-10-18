@@ -251,11 +251,11 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--iterations", type = int, default = 10000)
     parser.add_argument("-p", "--player", choices = ["random", "blind", "counter"], default = "blind")
     parser.add_argument("-V", "--verbose", action = "store_true", help = "Show the player's decisions as they play the game")
+    parser.add_argument("--odds", type = int, help = "How many rounds to show probabilities for", default = 50)
+    parser.add_argument("-a", "--no-ace-rule", help = "Make aces act normally", default = False, action  = "store_true")
+    parser.add_argument("-q", "--no-csv", help = "Don't print results in CSV", default = False, action  = "store_true")
 
     args = parser.parse_args()
-
-    if args.verbose:
-        verbose = True
 
     if args.player == "blind":
         player = Blind
@@ -266,5 +266,5 @@ if __name__ == '__main__':
     elif args.player == "random":
         player = Random
 
-    sys.exit(main(args.num_cards, args.iterations, player))
+    sys.exit(main(args.num_cards, args.iterations, player, verbose = args.verbose, odds = args.odds, ace_rule = not args.no_ace_rule, csv = not args.no_csv))
     
