@@ -231,7 +231,7 @@ class Game():
 def main(games, iters = 10000, player_cls = Counter, verbose = True, odds = 50, ace_rule = True, csv = True):
     player = player_cls(ace_rule = ace_rule)
 
-    headers = ["Num cards", "average rounds", "stddev", "min", "max"] + list(range(1,100))
+    headers = ["Num cards", "average rounds", "stddev", "min", "max"] + list(range(1,odds))
     if csv:
         print(",".join([str(item) for item in headers]))
 
