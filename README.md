@@ -2,6 +2,8 @@
 
 # Results
 
+All data presented here was simulated with 10,000 repeats.
+
 |  | With ace rule |  |  | No ace rule |  |  |
 | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
 | Num cards | Counter | Blind | Random | Counter | Blind | Random |
@@ -33,6 +35,6 @@ For the various game and player types, the solved equations are as follows:
 
 | Player | With ace rule | No ace rule |
 | ------ | ------------- | ----------- |
-| Counter | | 
-| Blind  |
-| Random |
+| Counter | $0.991 \texttimes \exp(0.343x)$ | $1.042 \texttimes \exp(0.287x)$
+| Blind  | $0.918 \texttimes \exp(0.370x)$ | $0.957 \texttimes \exp(0.317x)$
+| Random | $0.980 \texttimes \exp(0.839x)$ | $0.994 \texttimes \exp(0.754x)$
