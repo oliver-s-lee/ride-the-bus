@@ -1,6 +1,11 @@
-
-
 # Results
+
+![With ace rule](./Graphs/zoomed_ace.png)
+
+![No ace rule](./Graphs/zoomed_no_ace.png)
+
+
+# Data
 
 All data presented here was simulated with 10,000 repeats.
 
